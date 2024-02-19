@@ -8,9 +8,10 @@ actix-web = "4"
 serde = { version = "1.0", features = ["derive"] }
 crypto = "0.5.1"
 argon2 = "0.5.3"
-sqlx = "0.7.3"
+sqlx = { version = "0.7.3", features = ["mysql"] }
 derive_more = "0.99.17"
 config = { version = "0.14.0", features = ["json", "json5", "toml"]}
 strum = "0.26"
 strum_macros = "0.26"
 dotenv = "0.15.0"
+async-trait = "0.1.77"

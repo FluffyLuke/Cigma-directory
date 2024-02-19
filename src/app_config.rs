@@ -1,24 +1,20 @@
 use std::env;
 use dotenv::dotenv;
 
+use strum::IntoEnumIterator;
 use strum_macros::EnumString;
+
+use crate::databases::AvailableDatabases;
 
 #[derive(Debug, Clone)]
 pub struct AppConfig {
-    db: AvailableDatabases,
-    host: Option<String>,
-    port: Option<u16>,
-    user: Option<String>,
-    password: Option<String>,
-    db_name: Option<String>,
-    pool_size: Option<u16>,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug, EnumString, Clone, Copy)]
-pub enum AvailableDatabases {
-    //#[serde(rename(serialize = "Mysql"))]
-    #[strum(serialize = "mysql")]
-    Mysql
+    pub db: AvailableDatabases,
+    pub host: Option<String>,
+    pub port: Option<u16>,
+    pub user: Option<String>,
+    pub password: Option<String>,
+    pub db_name: Option<String>,
+    pub pool_size: Option<u16>,
 }
 
 pub fn get_config_env() -> Result<AppConfig, GetConfigError> {
@@ -39,7 +35,7 @@ pub fn get_config_env() -> Result<AppConfig, GetConfigError> {
         Ok(v) => {
             let parsed_v = v.parse::<u16>();
             if parsed_v.is_err() {
-                return Err(GetConfigError::CannotParsePort);
+                return Err(GetConfigError::CannotParse("port", v));
             }
             Some(parsed_v.unwrap())
         },
@@ -61,7 +57,7 @@ pub fn get_config_env() -> Result<AppConfig, GetConfigError> {
         Ok(v) => {
             let parsed_v = v.parse::<u16>();
             if parsed_v.is_err() {
-                return Err(GetConfigError::CannotParsePort);
+                return Err(GetConfigError::CannotParse("pool", v));
             }
             Some(parsed_v.unwrap())
         },
@@ -80,10 +76,27 @@ pub fn get_config_env() -> Result<AppConfig, GetConfigError> {
 }
 
 // TODO Make a better 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum GetConfigError {
-    CannotParsePort,
+    CannotParse(&'static str, String),
     BadDatabase,
     NoFieldFound(&'static str)
 }
 
+impl std::fmt::Display for GetConfigError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GetConfigError::CannotParse(field, value) => write!(f, "Cannot parse field {}={} to int", field, value),
+            GetConfigError::BadDatabase => {
+                let mut message = format!("Provided database is not available. List of databases available:\n");
+                for e in AvailableDatabases::iter() {
+                    let e = format!("{}\n", e);
+                    message.push_str(&e)
+                }
+
+                write!(f, "{}", message)
+            },
+            GetConfigError::NoFieldFound(v) => write!(f, "Field not found: {}", v),
+        }
+    }
+}
