@@ -3,7 +3,9 @@ use actix_web::{HttpResponse, ResponseError};
 use async_trait::async_trait;
 use derive_more::{Display, From};
 use sqlx::{Executor, MySql, Pool};
+use sqlx::prelude::*;
 
+use super::utils::query_insert;
 use super::{models, CreateUserError};
 
 #[derive(Clone)]
@@ -26,15 +28,14 @@ pub struct MySqlDatabase {
 #[async_trait]
 impl super::Database for MySqlDatabase {
     async fn create_user(&self, user: models::User, password: models::Password) -> Result<(), CreateUserError> {
-        let query = include_str!("../../sql/create_user.sql");
-        let query = sqlx::query_as!(
-            models::User,
-            "SELECT id from ?",
-            "abs", ":", "1", "35"
-        );
-        let result = self.pool.fetch_one(&*query)
+        let query = include_str!("../../sql/create_user.sql").to_string();
+        let query = query_insert(query, vec![&user.name, &user.last_name, &user.id.to_string(), &user.nickname]).unwrap();
+        let _result = self.pool.execute(query)
             .await
             .map_err(|err| CreateUserError::SqlxError(err))?;
+
+
+        let password
         Ok(())
     }
 }

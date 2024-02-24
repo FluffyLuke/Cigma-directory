@@ -7,6 +7,7 @@ use self::mysql::MySqlDatabase;
 
 pub mod mysql;
 pub mod models;
+pub mod utils;
 
 // Used only for serializing the cofig. Not an actual enum with databases
 #[derive(serde::Serialize, serde::Deserialize, Debug, EnumString, EnumIter, Clone, Copy)]
